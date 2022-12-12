@@ -43,6 +43,7 @@ python3 main.py
 Currently, the API only supports the following endpoint:
 ```
 GET /tap/{tap_type}/{amount}
+PUSH /tap/{tap_type}/{amount}
 ```
 
 | Tap Type (Integer) | Description     |
