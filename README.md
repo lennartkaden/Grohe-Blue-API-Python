@@ -29,7 +29,7 @@ The Sections `SERVER` and `API` are used to configure the API that will be start
 
 | :exclamation:  The `API_KEY` under `API` has to be unique and secure! |
 |-----------------------------------------------------------------------|
-Otherwise, anyone with access to the API can use it API to dispense water from your Grohe Blue device.
+Otherwise, anyone with access to the API can use it to dispense water from your Grohe Blue device.
 
 You will also need to enter device information about your Grohe Blue device under the `DEVICE` section.
 You can obtain this information by following the instructions in this [thread](https://github.com/FlorianSW/grohe-ondus-api-java/issues/12).
