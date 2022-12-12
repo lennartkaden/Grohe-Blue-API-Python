@@ -1,0 +1,18 @@
+{
+  "DEVICE": {
+    "LOCATION_ID": "0000000",
+    "ROOM_ID": "0000000",
+    "APPLIANCE_ID": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+  },
+  "CREDENTIALS": {
+    "EMAIL": "example@example.com",
+    "PASSWORD": "yourstrongpassword"
+  },
+  "API": {
+    "API_KEY": "yoursuperstongapikeyhere"
+  },
+  "SERVER": {
+    "BIND_ADDRESS": "127.0.0.1",
+    "BIND_PORT": 8000
+  }
+}
