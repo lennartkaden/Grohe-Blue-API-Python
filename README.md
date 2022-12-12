@@ -54,6 +54,9 @@ PUSH /tap/{tap_type}/{amount}
 
 The amount is an integer in milliliters in steps of 50ml. The minimum amount is 50ml and the maximum is 2000ml.
 
+You need to include the `API_KEY` in the header or as a query parameter to use the API.
+The key is called `API_KEY` and the value is the one you specified in the `settings.json` file.
+
 ## Disclaimer
 This API is not officially supported by Grohe and may break at any time.
 Use at your own risk.
