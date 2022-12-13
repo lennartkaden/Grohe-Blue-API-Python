@@ -1,4 +1,4 @@
-# HTTP Tap Control API for Grohe Blue Devices
+# HTTP Tap Control API for Grohe Blue Device
 Use this API to dispense water from your Grohe Blue device.
 The API uses the Grohe IOT API which is used by the Grohe Blue app.
 The API is not publicly documented and may change at any time.
