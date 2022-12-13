@@ -3,7 +3,7 @@ import time
 
 import requests
 
-from GroheClient import get_access_token, refresh_tokens
+from GroheClient.base import get_access_token, refresh_tokens
 from settings import get_setting as _
 
 DEVICE_LOCATION_ID = _("DEVICE/LOCATION_ID")
