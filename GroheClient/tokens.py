@@ -1,55 +1,24 @@
 import json
-import logging
-from datetime import datetime, timedelta
 
 import requests
 from selenium import webdriver
 from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 
-from settings import get_setting as _
 
-AUTH_BASE_URL = "https://idp2-apigw.cloud.grohe.com/v3/iot/oidc/login"
 REFRESH_TOKEN_BASE_URL = "https://idp2-apigw.cloud.grohe.com/v3/iot/oidc/refresh"
-
-CREDENTIALS_PASSWORD = _("CREDENTIALS/PASSWORD")
-CREDENTIALS_EMAIL = _("CREDENTIALS/EMAIL")
+AUTH_BASE_URL = "https://idp2-apigw.cloud.grohe.com/v3/iot/oidc/login"
 
 
-def process_browser_log_entry(entry: dict) -> dict:
+def get_tokens_from_credentials(grohe_email: str, grohe_password: str) -> dict:
     """
-    Process a browser log entry and return a dict with the method and params.
+    Get the initial access and refresh tokens from the given grohe credentials.
     Args:
-        entry: A browser log entry.
+        grohe_email: The grohe email.
+        grohe_password: The grohe password.
 
-    Returns: A dict with the method and params.
-
-    """
-    response = json.loads(entry['message'])['message']
-    return response
-
-
-def get_refresh_tokens() -> dict:
-    """
-    Refresh the access and refresh tokens.
-    Returns: A dict with the new tokens.
-
-    """
-    data = {
-        'refresh_token': refresh_token,
-    }
-    response = requests.post(REFRESH_TOKEN_BASE_URL, json=data)
-    response.raise_for_status()
-
-    tokens = get_tokens_from_json(response.json())
-    return tokens
-
-
-def get_initial_tokens() -> dict:
-    """
-    Get the initial access and refresh tokens.
     Returns: A dict with the tokens.
 
     """
@@ -75,8 +44,8 @@ def get_initial_tokens() -> dict:
     submit_button = driver.find_element(By.CLASS_NAME, 'btn-primary')
 
     # fill in the login data
-    email_input.send_keys(CREDENTIALS_EMAIL)
-    password_input.send_keys(CREDENTIALS_PASSWORD)
+    email_input.send_keys(grohe_email)
+    password_input.send_keys(grohe_password)
 
     # submit the form
     submit_button.click()
@@ -105,6 +74,19 @@ def get_initial_tokens() -> dict:
     return tokens
 
 
+def process_browser_log_entry(entry: dict) -> dict:
+    """
+    Process a browser log entry and return a dict with the method and params.
+    Args:
+        entry: A browser log entry.
+
+    Returns: A dict with the method and params.
+
+    """
+    response = json.loads(entry['message'])['message']
+    return response
+
+
 def get_tokens_from_json(json_data: dict) -> dict:
     """
     Get the tokens from the json data.
@@ -121,38 +103,17 @@ def get_tokens_from_json(json_data: dict) -> dict:
     return tokens
 
 
-# get the initial tokens
-try:
-    initial_tokens = get_initial_tokens()
-except Exception as e:
-    logging.error("Could not get initial tokens: {}".format(e))
-    exit(1)
-
-# set the tokens
-# noinspection PyUnboundLocalVariable
-access_token = initial_tokens['access_token']
-access_token_expiring_date = datetime.now() + timedelta(seconds=initial_tokens['access_token_expires_in'] - 60)
-refresh_token = initial_tokens['refresh_token']
-
-
-def refresh_tokens():
-    logging.info("Refreshing tokens")
-    global access_token, refresh_token, access_token_expiring_date
-    tokens = get_refresh_tokens()
-    access_token = tokens['access_token']
-    refresh_token = tokens['refresh_token']
-    access_token_expiring_date = datetime.now() + timedelta(seconds=tokens['access_token_expires_in'] - 60)
-
-
-def get_access_token() -> str:
+def get_refresh_tokens(refresh_token: str) -> dict:
     """
-    Get the access token. Refresh the tokens if they are expired.
-    Returns: The access token.
+    Refresh the access and refresh tokens.
+    Returns: A dict with the new tokens.
 
     """
-    global access_token, access_token_expiring_date
-    # refresh the tokens if they are expired
-    if datetime.now() > access_token_expiring_date:
-        refresh_tokens()
+    data = {
+        'refresh_token': refresh_token,
+    }
+    response = requests.post(REFRESH_TOKEN_BASE_URL, json=data)
+    response.raise_for_status()
 
-    return access_token
+    tokens = get_tokens_from_json(response.json())
+    return tokens
