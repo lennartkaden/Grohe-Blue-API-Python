@@ -1,4 +1,5 @@
 import logging
+import time
 
 import requests
 
@@ -60,15 +61,30 @@ def execute_tap_command(tap_type: int, amount: int, tries=0) -> bool:
     response = requests.post(APPLIANCE_COMMAND_URL, headers=headers, json=data)
     response.raise_for_status()
 
+    tries += 1
+
     if response.ok:
         return True
 
     logging.error(f'Failed to execute tap command. Response: {response.text}')
 
-    # if the request failed, refresh the tokens and try again
-    if tries < 3:
+    # check for a server error
+    if response.status_code >= 500:
+        # wait 5 seconds and try again
+        time.sleep(5)
+        # small amount of tries to execute the command, otherwise water will be dispensed after the user expects it
+        if tries < 2:
+            return execute_tap_command(tap_type, amount, tries + 1)
+
+    # if the authorization token is invalid, refresh the tokens and try again
+    if response.status_code == 401 and tries < 3:
         logging.info('Refreshing tokens and trying again.')
         refresh_tokens()
+        return execute_tap_command(tap_type, amount, tries + 1)
+
+    # try again once after 5 seconds if the request failed
+    if tries < 2:
+        time.sleep(5)
         return execute_tap_command(tap_type, amount, tries + 1)
 
     return False
