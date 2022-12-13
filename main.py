@@ -1,3 +1,5 @@
+import logging
+
 import fastapi
 import uvicorn
 from fastapi import HTTPException, Security
@@ -6,8 +8,7 @@ from fastapi.params import Depends
 from fastapi.responses import Response
 from fastapi.security.api_key import APIKeyCookie, APIKeyHeader, APIKeyQuery
 from starlette.status import (
-    HTTP_200_OK, HTTP_201_CREATED, HTTP_403_FORBIDDEN, HTTP_412_PRECONDITION_FAILED,
-    HTTP_500_INTERNAL_SERVER_ERROR
+    HTTP_200_OK, HTTP_201_CREATED, HTTP_403_FORBIDDEN, HTTP_412_PRECONDITION_FAILED, HTTP_500_INTERNAL_SERVER_ERROR
 )
 
 from GroheClient.tap_controller import check_tap_params, execute_tap_command
@@ -22,6 +23,8 @@ API_KEY_NAME = "API_KEY"
 API_KEY_QUERY = APIKeyQuery(name=API_KEY_NAME, auto_error=False)
 API_KEY_HEADER = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 API_KEY_COOKIE = APIKeyCookie(name=API_KEY_NAME, auto_error=False)
+
+logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 
 
 async def get_api_key(api_key_query: str = Security(API_KEY_QUERY),
@@ -41,6 +44,7 @@ async def get_api_key(api_key_query: str = Security(API_KEY_QUERY),
     elif api_key_header == API_KEY:
         return api_key_header
     else:
+        logging.error(f"Invalid API key: {api_key_query} {api_key_header}")
         raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Could not validate credentials")
 
 
@@ -69,6 +73,7 @@ def tap(tap_type: int, amount: int, api_key: APIKey = Depends(get_api_key)) -> R
     except ValueError as e:
         raise HTTPException(status_code=HTTP_412_PRECONDITION_FAILED, detail=str(e))
     except Exception as e:
+        logging.error(e)
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not execute command")
 
 

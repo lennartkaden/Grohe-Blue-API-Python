@@ -1,6 +1,8 @@
+import logging
+
 import requests
 
-from GroheClient import get_access_token
+from GroheClient import get_access_token, refresh_tokens
 from settings import get_setting as _
 
 DEVICE_LOCATION_ID = _("DEVICE/LOCATION_ID")
@@ -26,12 +28,13 @@ def get_auth_header(access_token: str) -> str:
     return f'Bearer {access_token}'
 
 
-def execute_tap_command(tap_type: int, amount: int) -> bool:
+def execute_tap_command(tap_type: int, amount: int, tries=0) -> bool:
     """
     Executes the command for the given tap type and amount.
     Args:
         tap_type: The type of tap. 1 for still, 2 for medium, 3 for sparkling.
         amount: The amount of water to be dispensed in ml.
+        tries: The number of tries to execute the command.
 
     Returns: True if the command was executed successfully, False otherwise.
 
@@ -56,7 +59,19 @@ def execute_tap_command(tap_type: int, amount: int) -> bool:
     # send the request
     response = requests.post(APPLIANCE_COMMAND_URL, headers=headers, json=data)
     response.raise_for_status()
-    return response.ok
+
+    if response.ok:
+        return True
+
+    logging.error(f'Failed to execute tap command. Response: {response.text}')
+
+    # if the request failed, refresh the tokens and try again
+    if tries < 3:
+        logging.info('Refreshing tokens and trying again.')
+        refresh_tokens()
+        return execute_tap_command(tap_type, amount, tries + 1)
+
+    return False
 
 
 def check_tap_params(tap_type: int, amount: int) -> None:

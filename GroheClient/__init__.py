@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime, timedelta
 
 import requests
@@ -30,7 +31,7 @@ def process_browser_log_entry(entry: dict) -> dict:
     return response
 
 
-def refresh_tokens() -> dict:
+def get_refresh_tokens() -> dict:
     """
     Refresh the access and refresh tokens.
     Returns: A dict with the new tokens.
@@ -66,9 +67,7 @@ def get_initial_tokens() -> dict:
     driver.get(AUTH_BASE_URL)
 
     # wait for the login form to appear
-    WebDriverWait(driver, 10).until(
-        ec.presence_of_element_located((By.CLASS_NAME, 'form-group'))
-    )
+    WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.CLASS_NAME, 'form-group')))
 
     # get the input fields
     email_input = driver.find_element(By.ID, 'username')
@@ -116,21 +115,33 @@ def get_tokens_from_json(json_data: dict) -> dict:
 
     """
     tokens = {
-        'access_token'           : json_data['access_token'],
-        'access_token_expires_in': json_data['expires_in'],
-        'refresh_token'          : json_data['refresh_token'],
-        'refresh_token_expires_in': json_data['refresh_expires_in'],
+        'access_token' : json_data['access_token'], 'access_token_expires_in': json_data['expires_in'],
+        'refresh_token': json_data['refresh_token'], 'refresh_token_expires_in': json_data['refresh_expires_in'],
     }
     return tokens
 
 
 # get the initial tokens
-initial_tokens = get_initial_tokens()
+try:
+    initial_tokens = get_initial_tokens()
+except Exception as e:
+    logging.error("Could not get initial tokens: {}".format(e))
+    exit(1)
 
 # set the tokens
+# noinspection PyUnboundLocalVariable
 access_token = initial_tokens['access_token']
 access_token_expiring_date = datetime.now() + timedelta(seconds=initial_tokens['access_token_expires_in'] - 60)
 refresh_token = initial_tokens['refresh_token']
+
+
+def refresh_tokens():
+    logging.info("Refreshing tokens")
+    global access_token, refresh_token, access_token_expiring_date
+    tokens = get_refresh_tokens()
+    access_token = tokens['access_token']
+    refresh_token = tokens['refresh_token']
+    access_token_expiring_date = datetime.now() + timedelta(seconds=tokens['access_token_expires_in'] - 60)
 
 
 def get_access_token() -> str:
@@ -139,15 +150,9 @@ def get_access_token() -> str:
     Returns: The access token.
 
     """
-    global access_token
-    global refresh_token
-    global access_token_expiring_date
-
+    global access_token, access_token_expiring_date
     # refresh the tokens if they are expired
     if datetime.now() > access_token_expiring_date:
-        tokens = refresh_tokens()
-        access_token = tokens['access_token']
-        refresh_token = tokens['refresh_token']
-        access_token_expiring_date = datetime.now() + timedelta(seconds=tokens['access_token_expires_in'] - 60)
+        refresh_tokens()
 
     return access_token
