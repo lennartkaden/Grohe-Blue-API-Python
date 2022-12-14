@@ -33,8 +33,8 @@ All information needed to connect to your Grohe Blue device is stored in this fi
 
 If you choose to use you own API key, keep the following in mind:
 
-| :exclamation:  The `API_KEY` under `API` has to be unique and secure! |
-|-----------------------------------------------------------------------|
+| :exclamation:  The `API_KEY` has to be unique and secure! |
+|-----------------------------------------------------------|
 Otherwise, anyone with access to the API can use it to dispense water from your Grohe Blue device.
 
 Because of this, the `install.py` script will generate a random API key for you if you don't provide one.
