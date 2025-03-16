@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+import time
 
 from GroheClient.tokens import get_refresh_tokens, get_tokens_from_credentials
 from settings import get_setting as _
@@ -31,10 +32,19 @@ refresh_token = initial_tokens['refresh_token']
 def refresh_tokens():
     logging.info("Refreshing tokens")
     global access_token, refresh_token, access_token_expiring_date
-    tokens = get_refresh_tokens(refresh_token)
-    access_token = tokens['access_token']
-    refresh_token = tokens['refresh_token']
-    access_token_expiring_date = datetime.now() + timedelta(seconds=tokens['access_token_expires_in'] - 60)
+    attempts = 0
+    while attempts < 3:
+        try:
+            tokens = get_refresh_tokens(refresh_token)
+            access_token = tokens['access_token']
+            refresh_token = tokens['refresh_token']
+            access_token_expiring_date = datetime.now() + timedelta(seconds=tokens['access_token_expires_in'] - 60)
+            return
+        except Exception as e:
+            attempts += 1
+            logging.error(f"Attempt {attempts} failed: {e}")
+            time.sleep(5)
+    logging.error("Failed to refresh tokens after 3 attempts")
 
 
 def get_access_token() -> str:
